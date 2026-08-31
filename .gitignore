@@ -19,8 +19,18 @@ AGENTS.md.bak
 # OS junk
 .DS_Store
 
-# Your private inputs and generated resumes are personal.
-# Uncomment the next lines if you fork this publicly and don't want to commit them.
-# inputs/linkedin/*
-# inputs/old_resume/*
-# jobs/*/
+# Python cache and embed cache
+__pycache__/
+*.pyc
+scripts/ats_scorer/embed_cache/
+
+# Personal inputs and generated resumes — excluded from public repo
+inputs/linkedin/*
+inputs/old_resume/*
+inputs/certifications.md
+jobs/*/
+cpt_target_companies.md
+resume/master/master_resume.tex
+resume/master/master_resume.pdf
+resume/master/master_resume_jake.tex
+resume/master/master_resume_jake.pdf

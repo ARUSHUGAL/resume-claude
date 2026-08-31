@@ -59,10 +59,32 @@ build_one() {
 # Master resume (multi-page is fine here)
 build_one "$ROOT/resume/master/master_resume.tex" 0
 
-# Every tailored resume under jobs/*/ (must be 1 page)
+# Every tailored application under jobs/*/ (skips _archive).
+# Output PDFs are renamed with the folder name so uploads are self-identifying,
+# e.g. jobs/google_swe_intern_2027/google_swe_intern_2027_resume.pdf. This stops
+# the "wrong resume.pdf in the file picker" mixup.
 shopt -s nullglob
-for tex in "$ROOT"/jobs/*/resume.tex; do
-  build_one "$tex" 1
+for job_dir in "$ROOT"/jobs/*/; do
+  job_name="$(basename "$job_dir")"
+  [ "$job_name" = "_archive" ] && continue
+
+  # Tailored resume (must be 1 page)
+  if [ -f "$job_dir/resume.tex" ]; then
+    build_one "$job_dir/resume.tex" 1
+    if [ -f "$job_dir/resume.pdf" ]; then
+      mv -f "$job_dir/resume.pdf" "$job_dir/${job_name}_resume.pdf"
+      echo "  -> renamed to $job_dir${job_name}_resume.pdf"
+    fi
+  fi
+
+  # Cover letter (optional, no page limit)
+  if [ -f "$job_dir/cover_letter.tex" ]; then
+    build_one "$job_dir/cover_letter.tex" 0
+    if [ -f "$job_dir/cover_letter.pdf" ]; then
+      mv -f "$job_dir/cover_letter.pdf" "$job_dir/${job_name}_cover_letter.pdf"
+      echo "  -> renamed to $job_dir${job_name}_cover_letter.pdf"
+    fi
+  fi
 done
 shopt -u nullglob
 

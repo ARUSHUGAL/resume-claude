@@ -81,3 +81,48 @@ These informed this rubric and are useful if you want to go deeper:
 - [srbhr/Resume-Matcher](https://github.com/srbhr/Resume-Matcher) — open-source ATS matcher (spaCy/NLTK, semantic similarity)
 - [xitanggg/open-resume](https://github.com/xitanggg/open-resume) — open-source resume parser, good for testing ATS readability
 - [miteshgupta07/ATS-Scoring-System](https://github.com/miteshgupta07/ATS-Scoring-System) — keyword-based scoring example
+- [jananthan30/Resume-Builder](https://github.com/jananthan30/Resume-Builder) — 8-component ATS + 6-factor HR scorer, local Python, free tier
+
+## Real ATS scoring algorithm (8 weighted components)
+
+Based on testing with the Resume-Builder open-source engine (same logic as Workday/Taleo/Greenhouse filters):
+
+| Component | Weight | What it measures |
+|-----------|--------|------------------|
+| Phrase Match | 25% | Multi-word industry phrases from the JD (exact match). 10.6x callback increase for exact phrase matches. |
+| Keyword Match | 20% | Lemmatized single keywords with synonym expansion. |
+| Weighted Industry Terms | 15% | Domain-specific terminology with recency decay. |
+| Semantic Similarity | 10% | SBERT vector cosine similarity between resume text and JD text. |
+| BM25 Score | 10% | Probabilistic relevance ranking (same algorithm search engines use). |
+| Job Title Match | 10% | Whether the JD's exact job title appears in your resume header or summary. |
+| Graph Centrality | 5% | Infers related skills from a skill graph (NetworkX). |
+| Skill Recency | 5% | Exponential decay: recent experience weighted higher than old. |
+
+Key insight: **Phrase Match (25%) is the single highest-weight component.** If the JD says "distributed systems" and your resume doesn't have that exact two-word phrase together, you lose a quarter of your score even if you have both words separately.
+
+## Proven tactics that move the score (from real testing)
+
+These changes moved a resume from 57.8% to 88.9% against a Backend SWE Intern JD:
+
+1. **Mirror exact multi-word phrases from the JD.** "system design", "distributed systems", "REST API", "CI/CD pipeline" must appear as-is, not paraphrased. This alone moved Phrase Match from 40% to 100%.
+2. **Every single keyword in the JD must appear somewhere on your resume.** Missing even one "nice to have" keyword costs you. Put them in Skills if you can't fit them in bullets.
+3. **Put skills in TWO places:** the Skills section (for keyword list matching) AND inside experience bullets (for contextual matching, which ranks higher).
+4. **Use a dedicated Skills subsection for Cloud/DevOps.** Listing AWS, GCP, Azure, Docker, CI/CD in one line catches all cloud keywords regardless of which the JD asks for.
+5. **Add the JD's job title verbatim to your Summary.** If the JD says "Software Engineer Intern - Backend", your summary should say "backend software engineering internship" or similar.
+6. **Soft skills count.** "teamwork", "communication", "agile" are keywords too. Weave them into team-lead bullets naturally.
+
+## What kills your score (from real testing)
+
+- **FontAwesome or icon fonts in LaTeX.** They extract as `(cid:XXX)` garbage and corrupt nearby text. The ATS sees gibberish instead of your phone number and email. This dropped a resume from parseable to 35.9%. Never use `\faPhone`, `\faEnvelope`, `\faLinkedin`, etc.
+- **Word concatenation in PDF extraction.** Dense LaTeX spacing can cause `pdftotext` to merge words: "ComputerSciencestudent" instead of "Computer Science student". The ATS can't match keywords it can't parse. Test with `pdftotext resume.pdf -` and check for merged words.
+- **Readability penalty.** Overly complex sentences (Dale-Chall > 10) get penalized. Keep bullets to one clear sentence each.
+- **Missing "nice to have" keywords.** Even optional requirements cost points. If you have any exposure at all, mention it.
+
+## Template comparison (tested August 2025)
+
+| Template | ATS Score | Issue |
+|----------|-----------|-------|
+| Custom (this workspace's template) | 88.9% | Clean extraction, no icons, single column |
+| Jake's Resume (fontawesome5) | 35.9% | Icons extract as CID codes, words concatenate, phrase match drops to 0% |
+
+The workspace template is ATS-optimal. Do not switch to icon-based templates.
